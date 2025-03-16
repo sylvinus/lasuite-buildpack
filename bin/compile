@@ -34,8 +34,9 @@ fi
 
 # Build frontend first
 echo "-----> Building Next.js frontend using Node.js buildpack"
-cd "$BUILD_DIR/src/frontend"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
+
+ls -lR $BUILD_DIR
 
 # TODO: configure app name
 echo "-----> Copying Impress static files"
