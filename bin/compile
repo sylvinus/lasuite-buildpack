@@ -37,12 +37,16 @@ echo "-----> Building Next.js frontend using Node.js buildpack"
 cd "$BUILD_DIR/src/frontend"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
-# Now prepare backend directory for Python buildpack
-echo "-----> Preparing Django backend"
-cp -r "$BUILD_DIR/src/backend"/* "$BUILD_DIR/"
+# TODO: configure app name
+echo "-----> Copying Impress static files"
+cp -r "$BUILD_DIR/src/frontend/apps/impress/out/*" "$BUILD_DIR/src/backend/static_full/"
 
 # Run Python buildpack compile
 echo "-----> Running Python buildpack"
-"$PYTHON_BUILDPACK_DIR/bin/compile" "$BUILD_DIR" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+"$PYTHON_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/backend" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+
+# Run Python buildpack compile
+echo "-----> Use Python backend as new root"
+mv "$BUILD_DIR/src/backend" /tmp/build_backend_tmp && rm -rf $BUILD_DIR && mv /tmp/build_backend_tmp $BUILD_DIR
 
 echo "-----> Build completed" 

@@ -11,6 +11,6 @@ else
   cat << EOF
 ---
 default_process_types:
-  web: cd src/backend && gunicorn your_project.wsgi
+  web: cd src/backend && gunicorn impress.wsgi
 EOF
-fi 
+fi
