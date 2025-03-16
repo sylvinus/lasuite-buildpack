@@ -36,12 +36,9 @@ fi
 echo "-----> Building Next.js frontend using Node.js buildpack"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
-ls -la "$BUILD_DIR/src/frontend"
-ls -la "$BUILD_DIR/src/frontend/apps/impress"
-
 # TODO: configure app name
 echo "-----> Copying Impress static files"
-cp -r "$BUILD_DIR/src/frontend/apps/impress/out/*" "$BUILD_DIR/src/backend/static_full/"
+cp -r "$BUILD_DIR"/src/frontend/apps/impress/out/* "$BUILD_DIR/src/backend/static_full/"
 
 # Run Python buildpack compile
 echo "-----> Running Python buildpack"
