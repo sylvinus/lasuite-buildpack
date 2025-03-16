@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -o errexit    # always exit on error
+set -o pipefail   # don't ignore exit codes when piping output
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+# Function to output step messages
+indent() {
+  sed -u 's/^/       /'
+}
+
+echo "-----> La Suite Numérique buildpack"
+
+# Download and extract Node.js buildpack
+NODEJS_BUILDPACK_URL="https://github.com/Scalingo/nodejs-buildpack"
+NODEJS_BUILDPACK_DIR="$CACHE_DIR/nodejs-buildpack"
+
+if [ ! -d "$NODEJS_BUILDPACK_DIR" ]; then
+  echo "-----> Fetching Scalingo Node.js buildpack"
+  git clone "$NODEJS_BUILDPACK_URL" "$NODEJS_BUILDPACK_DIR" 2>&1 | indent
+fi
+
+# Download and extract Python buildpack
+PYTHON_BUILDPACK_URL="https://github.com/Scalingo/python-buildpack"
+PYTHON_BUILDPACK_DIR="$CACHE_DIR/python-buildpack"
+
+if [ ! -d "$PYTHON_BUILDPACK_DIR" ]; then
+  echo "-----> Fetching Scalingo Python buildpack"
+  git clone "$PYTHON_BUILDPACK_URL" "$PYTHON_BUILDPACK_DIR" 2>&1 | indent
+fi
+
+# Build frontend first
+echo "-----> Building Next.js frontend using Node.js buildpack"
+cd "$BUILD_DIR/src/frontend"
+"$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
+
+# Now prepare backend directory for Python buildpack
+echo "-----> Preparing Django backend"
+cp -r "$BUILD_DIR/src/backend"/* "$BUILD_DIR/"
+
+# Run Python buildpack compile
+echo "-----> Running Python buildpack"
+"$PYTHON_BUILDPACK_DIR/bin/compile" "$BUILD_DIR" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+
+echo "-----> Build completed" 

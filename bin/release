@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Get the release configuration from Python buildpack
+CACHE_DIR=${2:-}
+PYTHON_BUILDPACK_DIR="$CACHE_DIR/python-buildpack"
+
+if [ -x "$PYTHON_BUILDPACK_DIR/bin/release" ]; then
+  "$PYTHON_BUILDPACK_DIR/bin/release" "$1"
+else
+  # Fallback default configuration
+  cat << EOF
+---
+default_process_types:
+  web: cd src/backend && gunicorn your_project.wsgi
+EOF
+fi 

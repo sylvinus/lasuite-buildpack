@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Exit on error
+set -e
+
+BUILD_DIR=$1
+
+if [ -f "$BUILD_DIR/src/backend/manage.py" ] && [ -f "$BUILD_DIR/src/frontend/package.json" ]; then
+  echo "La Suite Numérique"
+  exit 0
+else
+  exit 1
+fi 
