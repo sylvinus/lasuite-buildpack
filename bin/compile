@@ -36,16 +36,16 @@ fi
 echo "-----> Building Next.js frontend using Node.js buildpack"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
-# TODO: configure app name
-echo "-----> Moving Impress static files into the backend"
-mv "$BUILD_DIR"/src/frontend/apps/impress/out "$BUILD_DIR/src/backend/static_full"
+# # TODO: configure app name
+# echo "-----> Moving Impress static files into the backend"
+# mv "$BUILD_DIR"/src/frontend/apps/impress/out "$BUILD_DIR/src/backend/static_full"
 
 # Run Python buildpack compile
 echo "-----> Running Python buildpack"
 "$PYTHON_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/backend" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
 
-# Run Python buildpack compile
-echo "-----> Use Python backend as new root"
-mv "$BUILD_DIR/src/backend" /tmp/build_backend_tmp && rm -rf $BUILD_DIR && mv /tmp/build_backend_tmp $BUILD_DIR
+# # Run Python buildpack compile
+# echo "-----> Use Python backend as new root"
+# mv "$BUILD_DIR/src/backend" /tmp/build_backend_tmp && rm -rf $BUILD_DIR && mv /tmp/build_backend_tmp $BUILD_DIR
 
 echo "-----> Build completed" 

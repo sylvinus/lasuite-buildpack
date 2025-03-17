@@ -8,6 +8,7 @@ if [ -x "$PYTHON_BUILDPACK_DIR/bin/release" ]; then
   "$PYTHON_BUILDPACK_DIR/bin/release" "$1"
 else
   # Fallback default configuration
+  # TODO: configure app name
   cat << EOF
 ---
 default_process_types:
