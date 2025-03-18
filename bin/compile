@@ -36,6 +36,11 @@ fi
 echo "-----> Building Next.js frontend using Node.js buildpack"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
+ls -la "$BUILD_DIR/src/frontend"
+ls -lRa "$BUILD_DIR/src/frontend/.scalingo"
+
+cp -r "$BUILD_DIR/src/frontend/.scalingo" "$BUILD_DIR/.scalingo"
+
 # TODO: configure app name
 echo "-----> Moving JS servers out of the frontend workspace"
 mv "$BUILD_DIR"/src/frontend/servers "$BUILD_DIR/src/servers"
@@ -43,6 +48,11 @@ mv "$BUILD_DIR"/src/frontend/servers "$BUILD_DIR/src/servers"
 # Run Python buildpack compile
 echo "-----> Running Python buildpack"
 "$PYTHON_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/backend" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+
+ls -la "$BUILD_DIR/src/backend"
+ls -lRa "$BUILD_DIR/src/backend/.scalingo"
+
+cp -r "$BUILD_DIR/src/backend/.scalingo" "$BUILD_DIR/.scalingo"
 
 # # Run Python buildpack compile
 # echo "-----> Use Python backend as new root"
