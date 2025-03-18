@@ -37,7 +37,7 @@ echo "-----> Building Next.js frontend using Node.js buildpack"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
 # Copy Node.js binaries files
-mv "$BUILD_DIR/src/frontend/.scalingo" /tmp/scalingo-nodejs
+cp -r "$BUILD_DIR/src/frontend/.scalingo" /tmp/scalingo-nodejs
 
 # Move exported JS app to the backend root
 mv "$BUILD_DIR/src/frontend/apps/impress/out" "$BUILD_DIR/src/backend/static_app"
