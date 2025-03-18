@@ -46,8 +46,10 @@ mv "$BUILD_DIR/src/frontend/servers/y-provider" "$BUILD_DIR/src/backend/y-provid
 
 rm -rf "$BUILD_DIR/src/backend/y-provider/node_modules"
 
+export PATH="$BUILD_DIR/src/frontend/.scalingo/node/bin:$BUILD_DIR/src/frontend/.scalingo/yarn/bin:$PATH"
+
 # Reinstall dependencies for y-provider, once built
-"$BUILD_DIR/src/frontend/.scalingo/yarn/bin/yarn" install --cwd "$BUILD_DIR/src/backend/y-provider"
+yarn install --cwd "$BUILD_DIR/src/backend/y-provider"
 
 # Copy Node.js binaries files
 mv "$BUILD_DIR/src/frontend/.scalingo" "$BUILD_DIR/src/backend/.scalingo-nodejs"
