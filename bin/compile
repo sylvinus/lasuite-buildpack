@@ -49,6 +49,7 @@ rm -rf "$BUILD_DIR/src/backend/y-provider/node_modules"
 export PATH="$BUILD_DIR/src/frontend/.scalingo/node/bin:$BUILD_DIR/src/frontend/.scalingo/yarn/bin:$PATH"
 
 echo "-----> Reinstalling production dependencies for y-provider"
+jq 'del(.devDependencies)' "$BUILD_DIR/src/backend/y-provider/package.json" > /tmp/temp.json && mv /tmp/temp.json "$BUILD_DIR/src/backend/y-provider/package.json"
 yarn install --production --cwd "$BUILD_DIR/src/backend/y-provider"
 
 # Copy Node.js binaries files
