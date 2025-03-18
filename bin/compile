@@ -36,20 +36,33 @@ fi
 echo "-----> Building Next.js frontend using Node.js buildpack"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
-cp -r "$BUILD_DIR/src/frontend/.scalingo" "$BUILD_DIR/.scalingo"
+echo $PATH
 
-# TODO: configure app name
-echo "-----> Moving JS servers out of the frontend workspace"
-mv "$BUILD_DIR"/src/frontend/servers "$BUILD_DIR/src/servers"
+# Move exported JS app to the backend root
+mv "$BUILD_DIR/src/frontend/apps/impress/out" "$BUILD_DIR/src/backend/static_app"
+
+# Move y-provider to the backend root
+mv "$BUILD_DIR/src/frontend/servers/y-provider" "$BUILD_DIR/src/backend/y-provider"
+
+rm -rf "$BUILD_DIR/src/backend/y-provider/node_modules"
+
+# Reinstall dependencies for y-provider, once built
+"$BUILD_DIR/src/frontend/.scalingo/yarn/bin/yarn" install --cwd "$BUILD_DIR/src/backend/y-provider"
+
+# Copy Node.js binaries files
+mv "$BUILD_DIR/src/frontend/.scalingo" "$BUILD_DIR/src/backend/.scalingo-nodejs"
+
+# Run Python buildpack compile
+echo "-----> Use Python backend as new root"
+mv "$BUILD_DIR/src/backend" /tmp/build_backend_tmp && rm -rf $BUILD_DIR && mv /tmp/build_backend_tmp $BUILD_DIR
 
 # Run Python buildpack compile
 echo "-----> Running Python buildpack"
-"$PYTHON_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/backend" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+"$PYTHON_BUILDPACK_DIR/bin/compile" $BUILD_DIR "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
 
-cp -r "$BUILD_DIR/src/backend/.scalingo" "$BUILD_DIR/.scalingo"
+echo "-----> Restore Node.js binaries files"
+mv "$BUILD_DIR/.scalingo-nodejs/*" "$BUILD_DIR/.scalingo/"
 
-# # Run Python buildpack compile
-# echo "-----> Use Python backend as new root"
-# mv "$BUILD_DIR/src/backend" /tmp/build_backend_tmp && rm -rf $BUILD_DIR && mv /tmp/build_backend_tmp $BUILD_DIR
+echo $PATH
 
 echo "-----> Build completed" 
