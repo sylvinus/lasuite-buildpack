@@ -36,8 +36,7 @@ fi
 echo "-----> Building Next.js frontend using Node.js buildpack"
 "$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
-# Copy Node.js binaries files
-cp -r "$BUILD_DIR/src/frontend/.scalingo" /tmp/scalingo-nodejs
+echo "-----> Moving Next.js app and Node.js servers to the backend"
 
 # Move exported JS app to the backend root
 mv "$BUILD_DIR/src/frontend/apps/impress/out" "$BUILD_DIR/src/backend/static_app"
@@ -45,6 +44,7 @@ mv "$BUILD_DIR/src/frontend/apps/impress/out" "$BUILD_DIR/src/backend/static_app
 # Move y-provider to the backend root
 mv "$BUILD_DIR/src/frontend/servers/y-provider" "$BUILD_DIR/src/backend/y-provider"
 
+cp -r "$BUILD_DIR/src/frontend/.scalingo" /tmp/scalingo-nodejs
 rm -rf "$BUILD_DIR/src/backend/y-provider/node_modules"
 
 export PATH="$BUILD_DIR/src/frontend/.scalingo/node/bin:$BUILD_DIR/src/frontend/.scalingo/yarn/bin:$PATH"
@@ -53,17 +53,13 @@ echo "-----> Reinstalling production dependencies for y-provider"
 jq 'del(.devDependencies)' "$BUILD_DIR/src/backend/y-provider/package.json" > /tmp/temp.json && mv /tmp/temp.json "$BUILD_DIR/src/backend/y-provider/package.json"
 yarn install --production --cwd "$BUILD_DIR/src/backend/y-provider"
 
-# Run Python buildpack compile
 echo "-----> Use Python backend as new root"
 mv "$BUILD_DIR/src/backend" /tmp/build_backend_tmp && rm -rf $BUILD_DIR && mv /tmp/build_backend_tmp $BUILD_DIR
 
-# Run Python buildpack compile
 echo "-----> Running Python buildpack"
 "$PYTHON_BUILDPACK_DIR/bin/compile" $BUILD_DIR "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
 
 echo "-----> Restore Node.js binaries files"
 mv /tmp/scalingo-nodejs/* "$BUILD_DIR/.scalingo/"
-
-echo $PATH
 
 echo "-----> Build completed" 
