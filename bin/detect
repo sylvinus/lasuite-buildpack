@@ -4,10 +4,13 @@
 set -e
 
 BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
 
-if [ -f "$BUILD_DIR/src/backend/manage.py" ] && [ -f "$BUILD_DIR/src/frontend/package.json" ]; then
+if [ -f "$ENV_DIR/LASUITE_APP_NAME" ]; then
   echo "La Suite Numérique"
   exit 0
 else
+  echo "Not a La Suite Numérique app (missing LASUITE_APP_NAME)"
   exit 1
 fi 

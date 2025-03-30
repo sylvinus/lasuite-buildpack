@@ -12,54 +12,71 @@ indent() {
   sed -u 's/^/       /'
 }
 
-echo "-----> La Suite Numérique buildpack"
+# Function to read environment variables
+read_env() {
+  local env_dir=$1
+  local var_name=$2
+  local default_value=$3
+  
+  if [ -f "$env_dir/$var_name" ]; then
+    cat "$env_dir/$var_name"
+  else
+    echo "$default_value"
+  fi
+}
 
-# Download and extract Node.js buildpack
-NODEJS_BUILDPACK_URL="https://github.com/Scalingo/nodejs-buildpack"
-NODEJS_BUILDPACK_DIR="$CACHE_DIR/nodejs-buildpack"
+# Read environment configuration
+APP_NAME=$(read_env "$ENV_DIR" "LASUITE_APP_NAME" "")
+FRONTEND_DIR=$(read_env "$ENV_DIR" "LASUITE_FRONTEND_DIR" "src/frontend")
+BACKEND_DIR=$(read_env "$ENV_DIR" "LASUITE_BACKEND_DIR" "src/backend")
+SCRIPT_PRE=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_PRECOMPILE" "")
+SCRIPT_MID=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_MIDCOMPILE" "")
+SCRIPT_POST=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_POSTCOMPILE" "")
+FRONTEND_BUILDPACK=$(read_env "$ENV_DIR" "LASUITE_FRONTEND_BUILDPACK" "https://github.com/Scalingo/nodejs-buildpack")
+BACKEND_BUILDPACK=$(read_env "$ENV_DIR" "LASUITE_BACKEND_BUILDPACK" "https://github.com/Scalingo/python-buildpack")
 
-if [ ! -d "$NODEJS_BUILDPACK_DIR" ]; then
-  echo "-----> Fetching Scalingo Node.js buildpack"
-  git clone "$NODEJS_BUILDPACK_URL" "$NODEJS_BUILDPACK_DIR" 2>&1 | indent
+echo "-----> La Suite Numérique buildpack. App name: $APP_NAME"
+
+# Download and extract frontend buildpack
+FRONTEND_BUILDPACK_DIR="$CACHE_DIR/frontend-buildpack"
+
+if [ ! -d "$FRONTEND_BUILDPACK_DIR" ]; then
+  echo "-----> Fetching Scalingo frontend buildpack"
+  git clone "$FRONTEND_BUILDPACK" "$FRONTEND_BUILDPACK_DIR" 2>&1 | indent
 fi
 
-# Download and extract Python buildpack
-PYTHON_BUILDPACK_URL="https://github.com/Scalingo/python-buildpack"
-PYTHON_BUILDPACK_DIR="$CACHE_DIR/python-buildpack"
+# Download and extract backend buildpack
+BACKEND_BUILDPACK_DIR="$CACHE_DIR/backend-buildpack"
 
-if [ ! -d "$PYTHON_BUILDPACK_DIR" ]; then
-  echo "-----> Fetching Scalingo Python buildpack"
-  git clone "$PYTHON_BUILDPACK_URL" "$PYTHON_BUILDPACK_DIR" 2>&1 | indent
+if [ ! -d "$BACKEND_BUILDPACK_DIR" ]; then
+  echo "-----> Fetching Scalingo backend buildpack"
+  git clone "$BACKEND_BUILDPACK" "$BACKEND_BUILDPACK_DIR" 2>&1 | indent
 fi
 
-# Build frontend first
-echo "-----> Building Next.js frontend using Node.js buildpack"
-"$NODEJS_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/src/frontend" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
+# Run pre-compile script if it exists
+if [ ! -z "$SCRIPT_PRE" ]; then
+  echo "-----> Running pre-compile script: $SCRIPT_PRE"
+  (cd "$BUILD_DIR" && sh -c "$SCRIPT_PRE") 2>&1 | indent
+fi
 
-echo "-----> Moving Next.js app and Node.js servers to the backend"
+# Build frontend
+echo "-----> Building frontend in $FRONTEND_DIR"
+"$FRONTEND_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/$FRONTEND_DIR" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
-# Move exported JS app to the backend root
-mv "$BUILD_DIR/src/frontend/apps/impress/out" "$BUILD_DIR/src/backend/static_app"
+# Run mid-compile script if it exists
+if [ ! -z "$SCRIPT_MID" ]; then
+  echo "-----> Running mid-compile script: $SCRIPT_MID"
+  (cd "$BUILD_DIR" && sh -c "$SCRIPT_MID") 2>&1 | indent
+fi
 
-# Move y-provider to the backend root
-mv "$BUILD_DIR/src/frontend/servers/y-provider" "$BUILD_DIR/src/backend/y-provider"
+# Build backend
+echo "-----> Building backend in $BACKEND_DIR"
+"$BACKEND_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/$BACKEND_DIR" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
 
-cp -r "$BUILD_DIR/src/frontend/.scalingo" /tmp/scalingo-nodejs
-rm -rf "$BUILD_DIR/src/backend/y-provider/node_modules"
-
-export PATH="$BUILD_DIR/src/frontend/.scalingo/node/bin:$BUILD_DIR/src/frontend/.scalingo/yarn/bin:$PATH"
-
-echo "-----> Reinstalling production dependencies for y-provider"
-jq 'del(.devDependencies)' "$BUILD_DIR/src/backend/y-provider/package.json" > /tmp/temp.json && mv /tmp/temp.json "$BUILD_DIR/src/backend/y-provider/package.json"
-yarn install --production --cwd "$BUILD_DIR/src/backend/y-provider"
-
-echo "-----> Use Python backend as new root"
-mv "$BUILD_DIR/src/backend" /tmp/build_backend_tmp && rm -rf $BUILD_DIR && mv /tmp/build_backend_tmp $BUILD_DIR
-
-echo "-----> Running Python buildpack"
-"$PYTHON_BUILDPACK_DIR/bin/compile" $BUILD_DIR "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
-
-echo "-----> Restore Node.js binaries files"
-mv /tmp/scalingo-nodejs/* "$BUILD_DIR/.scalingo/"
+# Run post-compile script if it exists
+if [ ! -z "$SCRIPT_POST" ]; then
+  echo "-----> Running post-compile script: $SCRIPT_POST"
+  (cd "$BUILD_DIR" && sh -c "$SCRIPT_POST") 2>&1 | indent
+fi
 
 echo "-----> Build completed" 
