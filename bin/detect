@@ -1,7 +1,5 @@
-#!/bin/bash
-
-# Exit on error
-set -e
+#!/usr/bin/env bash
 
 # Always activate if configured
+echo "La Suite Numérique buildpack"
 exit 0
