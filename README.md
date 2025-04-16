@@ -31,9 +31,11 @@ The following are optional. All paths are relative to the root of the repository
 
 See the source in `bin/compile`. In a nutshell:
 
-- It fetches both buildpacks
+- It fetches all buildpacks
 - It runs `LASUITE_SCRIPT_PRECOMPILE` if it exists
 - It runs the frontend buildpack in `LASUITE_FRONTEND_DIR`
-- It runs `LASUITE_SCRIPT_MIDCOMPILE` if it exists
+- It runs `LASUITE_SCRIPT_POSTFRONTEND` if it exists
 - It runs the backend buildpack in `LASUITE_BACKEND_DIR`
+- It runs `LASUITE_SCRIPT_POSTBACKEND` if it exists
+- It runs the nginx buildpack in `LASUITE_NGINX_DIR` if it is set
 - It runs `LASUITE_SCRIPT_POSTCOMPILE` if it exists

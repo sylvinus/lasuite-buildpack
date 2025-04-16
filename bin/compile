@@ -69,6 +69,7 @@ fi
 # Run pre-compile script if it exists
 if [ ! -z "$SCRIPT_PRE" ]; then
   echo "-----> Running pre-compile script: $SCRIPT_PRE"
+  chmod +x "$SCRIPT_PRE"
   (cd "$BUILD_DIR" && sh -c "$SCRIPT_PRE") 2>&1 | indent
 fi
 
@@ -79,6 +80,7 @@ echo "-----> Building frontend in $FRONTEND_DIR"
 # Run post-frontend script if it exists
 if [ ! -z "$SCRIPT_POSTFRONTEND" ]; then
   echo "-----> Running post-frontend script: $SCRIPT_POSTFRONTEND"
+  chmod +x "$SCRIPT_POSTFRONTEND"
   (cd "$BUILD_DIR" && sh -c "$SCRIPT_POSTFRONTEND") 2>&1 | indent
 fi
 
@@ -89,6 +91,7 @@ echo "-----> Building backend in $BACKEND_DIR"
 # Run post-backend script if it exists
 if [ ! -z "$SCRIPT_POSTBACKEND" ]; then
   echo "-----> Running post-backend script: $SCRIPT_POSTBACKEND"
+  chmod +x "$SCRIPT_POSTBACKEND"
   (cd "$BUILD_DIR" && sh -c "$SCRIPT_POSTBACKEND") 2>&1 | indent
 fi
 
@@ -101,6 +104,7 @@ fi
 # Run post-compile script if it exists
 if [ ! -z "$SCRIPT_POST" ]; then
   echo "-----> Running post-compile script: $SCRIPT_POST"
+  chmod +x "$SCRIPT_POST"
   (cd "$BUILD_DIR" && sh -c "$SCRIPT_POST") 2>&1 | indent
 fi
 
