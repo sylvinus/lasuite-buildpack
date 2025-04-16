@@ -6,11 +6,4 @@ PYTHON_BUILDPACK_DIR="$CACHE_DIR/python-buildpack"
 
 if [ -x "$PYTHON_BUILDPACK_DIR/bin/release" ]; then
   "$PYTHON_BUILDPACK_DIR/bin/release" "$1"
-else
-  # Fallback default configuration
-  cat << EOF
----
-default_process_types:
-  web: cd src/backend && gunicorn impress.wsgi
-EOF
 fi
