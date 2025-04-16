@@ -29,11 +29,14 @@ read_env() {
 APP_NAME=$(read_env "$ENV_DIR" "LASUITE_APP_NAME" "")
 FRONTEND_DIR=$(read_env "$ENV_DIR" "LASUITE_FRONTEND_DIR" "src/frontend")
 BACKEND_DIR=$(read_env "$ENV_DIR" "LASUITE_BACKEND_DIR" "src/backend")
+NGINX_DIR=$(read_env "$ENV_DIR" "LASUITE_NGINX_DIR" "")
 SCRIPT_PRE=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_PRECOMPILE" "")
-SCRIPT_MID=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_MIDCOMPILE" "")
+SCRIPT_POSTFRONTEND=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_POSTFRONTEND" "")
+SCRIPT_POSTBACKEND=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_POSTBACKEND" "")
 SCRIPT_POST=$(read_env "$ENV_DIR" "LASUITE_SCRIPT_POSTCOMPILE" "")
 FRONTEND_BUILDPACK=$(read_env "$ENV_DIR" "LASUITE_FRONTEND_BUILDPACK" "https://github.com/Scalingo/nodejs-buildpack")
 BACKEND_BUILDPACK=$(read_env "$ENV_DIR" "LASUITE_BACKEND_BUILDPACK" "https://github.com/Scalingo/python-buildpack")
+NGINX_BUILDPACK=$(read_env "$ENV_DIR" "LASUITE_NGINX_BUILDPACK" "https://github.com/Scalingo/nginx-buildpack")
 
 echo "-----> La Suite Numérique buildpack. App name: $APP_NAME"
 
@@ -41,7 +44,7 @@ echo "-----> La Suite Numérique buildpack. App name: $APP_NAME"
 FRONTEND_BUILDPACK_DIR="$CACHE_DIR/frontend-buildpack"
 
 if [ ! -d "$FRONTEND_BUILDPACK_DIR" ]; then
-  echo "-----> Fetching Scalingo frontend buildpack"
+  echo "-----> Fetching frontend buildpack: $FRONTEND_BUILDPACK"
   git clone "$FRONTEND_BUILDPACK" "$FRONTEND_BUILDPACK_DIR" 2>&1 | indent
 fi
 
@@ -49,8 +52,18 @@ fi
 BACKEND_BUILDPACK_DIR="$CACHE_DIR/backend-buildpack"
 
 if [ ! -d "$BACKEND_BUILDPACK_DIR" ]; then
-  echo "-----> Fetching Scalingo backend buildpack"
+  echo "-----> Fetching backend buildpack: $BACKEND_BUILDPACK"
   git clone "$BACKEND_BUILDPACK" "$BACKEND_BUILDPACK_DIR" 2>&1 | indent
+fi
+
+# Download and extract Nginx buildpack if needed
+if [ ! -z "$NGINX_DIR" ]; then
+  NGINX_BUILDPACK_DIR="$CACHE_DIR/nginx-buildpack"
+  
+  if [ ! -d "$NGINX_BUILDPACK_DIR" ]; then
+    echo "-----> Fetching Nginx buildpack: $NGINX_BUILDPACK"
+    git clone "$NGINX_BUILDPACK" "$NGINX_BUILDPACK_DIR" 2>&1 | indent
+  fi
 fi
 
 # Run pre-compile script if it exists
@@ -63,15 +76,27 @@ fi
 echo "-----> Building frontend in $FRONTEND_DIR"
 "$FRONTEND_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/$FRONTEND_DIR" "$CACHE_DIR/frontend" "$ENV_DIR" 2>&1 | indent
 
-# Run mid-compile script if it exists
-if [ ! -z "$SCRIPT_MID" ]; then
-  echo "-----> Running mid-compile script: $SCRIPT_MID"
-  (cd "$BUILD_DIR" && sh -c "$SCRIPT_MID") 2>&1 | indent
+# Run post-frontend script if it exists
+if [ ! -z "$SCRIPT_POSTFRONTEND" ]; then
+  echo "-----> Running post-frontend script: $SCRIPT_POSTFRONTEND"
+  (cd "$BUILD_DIR" && sh -c "$SCRIPT_POSTFRONTEND") 2>&1 | indent
 fi
 
 # Build backend
 echo "-----> Building backend in $BACKEND_DIR"
 "$BACKEND_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/$BACKEND_DIR" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+
+# Run post-backend script if it exists
+if [ ! -z "$SCRIPT_POSTBACKEND" ]; then
+  echo "-----> Running post-backend script: $SCRIPT_POSTBACKEND"
+  (cd "$BUILD_DIR" && sh -c "$SCRIPT_POSTBACKEND") 2>&1 | indent
+fi
+
+# Build Nginx if configured
+if [ ! -z "$NGINX_DIR" ]; then
+  echo "-----> Building Nginx in $NGINX_DIR"
+  "$NGINX_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/$NGINX_DIR" "$CACHE_DIR/nginx" "$ENV_DIR" 2>&1 | indent
+fi
 
 # Run post-compile script if it exists
 if [ ! -z "$SCRIPT_POST" ]; then
@@ -79,4 +104,4 @@ if [ ! -z "$SCRIPT_POST" ]; then
   (cd "$BUILD_DIR" && sh -c "$SCRIPT_POST") 2>&1 | indent
 fi
 
-echo "-----> Build completed" 
+echo "-----> Build completed"
