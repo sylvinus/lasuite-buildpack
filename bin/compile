@@ -41,7 +41,7 @@ NGINX_BUILDPACK=$(read_env "$ENV_DIR" "LASUITE_NGINX_BUILDPACK" "https://github.
 echo "-----> La Suite Numérique buildpack. App name: $APP_NAME"
 
 # Download and extract frontend buildpack
-FRONTEND_BUILDPACK_DIR="$CACHE_DIR/frontend-buildpack"
+FRONTEND_BUILDPACK_DIR="/tmp/frontend-buildpack"
 
 if [ ! -d "$FRONTEND_BUILDPACK_DIR" ]; then
   echo "-----> Fetching frontend buildpack: $FRONTEND_BUILDPACK"
@@ -49,7 +49,7 @@ if [ ! -d "$FRONTEND_BUILDPACK_DIR" ]; then
 fi
 
 # Download and extract backend buildpack
-BACKEND_BUILDPACK_DIR="$CACHE_DIR/backend-buildpack"
+BACKEND_BUILDPACK_DIR="/tmp/backend-buildpack"
 
 if [ ! -d "$BACKEND_BUILDPACK_DIR" ]; then
   echo "-----> Fetching backend buildpack: $BACKEND_BUILDPACK"
@@ -58,7 +58,7 @@ fi
 
 # Download and extract Nginx buildpack if needed
 if [ ! -z "$NGINX_DIR" ]; then
-  NGINX_BUILDPACK_DIR="$CACHE_DIR/nginx-buildpack"
+  NGINX_BUILDPACK_DIR="/tmp/nginx-buildpack"
   
   if [ ! -d "$NGINX_BUILDPACK_DIR" ]; then
     echo "-----> Fetching Nginx buildpack: $NGINX_BUILDPACK"
@@ -86,7 +86,13 @@ fi
 
 # Build backend
 echo "-----> Building backend in $BACKEND_DIR"
-"$BACKEND_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/$BACKEND_DIR" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+
+if [ "$BACKEND_DIR" == "." ]; then
+  # There is a special case in the Python buildpack when BUILD_DIR==/app
+  "$BACKEND_BUILDPACK_DIR/bin/compile" "$BUILD_DIR" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+else
+  "$BACKEND_BUILDPACK_DIR/bin/compile" "$BUILD_DIR/$BACKEND_DIR" "$CACHE_DIR/backend" "$ENV_DIR" 2>&1 | indent
+fi
 
 # Run post-backend script if it exists
 if [ ! -z "$SCRIPT_POSTBACKEND" ]; then
